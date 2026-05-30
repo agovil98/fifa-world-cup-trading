@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIFA World Cup 2026 - Fair Value Trading Calculator</title>
+    
+    <!-- Tailwind CSS JIT CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React, ReactDOM & Babel for Browser JSX Compiling -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            950: '#030712',
+                            900: '#0b0f19',
+                            800: '#111827',
+                            700: '#1f2937',
+                            600: '#374151',
+                        },
+                        brand: {
+                            purple: '#8B5CF6',
+                            purpleGlow: 'rgba(139, 92, 246, 0.15)',
+                            emerald: '#10B981',
+                            emeraldGlow: 'rgba(16, 185, 129, 0.15)',
+                            sapphire: '#3B82F6',
+                            sapphireGlow: 'rgba(59, 130, 246, 0.15)',
+                            rose: '#EF4444',
+                            amber: '#F59E0B',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts & Custom Premium CSS Style Rules -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            background: radial-gradient(circle at 50% 50%, #0c1220 0%, #030712 100%);
+            font-family: 'Inter', sans-serif;
+            color: #f3f4f6;
+            min-height: 100vh;
+        }
+        
+        .glass-panel {
+            background: rgba(11, 15, 25, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        
+        .glass-input {
+            background: rgba(17, 24, 39, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #f3f4f6;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .glass-input:focus {
+            border-color: #8B5CF6;
+            box-shadow: 0 0 14px rgba(139, 92, 246, 0.3);
+            outline: none;
+        }
+
+        .gradient-text-purple {
+            background: linear-gradient(135deg, #a78bfa 0%, #8B5CF6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-text-emerald {
+            background: linear-gradient(135deg, #34d399 0%, #10B981 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glow-hover {
+            transition: all 0.3s ease;
+        }
+        .glow-hover:hover {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.35);
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: translateY(-1px);
+        }
+
+        /* Standard customized scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(3, 7, 18, 0.4);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.2);
+            border-radius: 9999px;
+            border: 2px solid rgba(3, 7, 18, 0.4);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.5);
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden antialiased">
+    <div id="root">
+        <!-- React App mounts here -->
+        <div class="flex items-center justify-center min-height-screen py-12 px-6">
+            <div class="text-center">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-purple mb-4"></div>
+                <h2 class="text-xl font-semibold font-outfit text-slate-300">Initializing FIFA Fair Value Engine...</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- React App Implementation inside type="text/babel" -->
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // Simplified 11-column realistic seed CSV representation - loaded EXACTLY from the uploaded image
+        const DEFAULT_CSV_DATA = `Team,G1,G2,G3,G4,L32,L16,QF,SF,FINAL,CHAMP
+Spain,0.7542,0.1942,0.0443,0.0091,0.7543,0.7288,0.5209,0.3875,0.2527,0.1582
+France,0.6075,0.2538,0.1067,0.0320,0.6058,0.7034,0.4754,0.3260,0.2076,0.1286
+England,0.6778,0.2140,0.0804,0.0279,0.6835,0.6899,0.4775,0.3058,0.1894,0.1102
+Argentina,0.7264,0.1856,0.0668,0.0212,0.7206,0.6290,0.4548,0.3018,0.1783,0.1000
+Portugal,0.5924,0.2744,0.0976,0.0356,0.5949,0.6236,0.4000,0.2396,0.1300,0.0684
+Brazil,0.6006,0.2790,0.1012,0.0193,0.6045,0.6167,0.3856,0.2192,0.1254,0.0682
+Germany,0.6010,0.2725,0.1035,0.0231,0.6036,0.6199,0.3410,0.2036,0.1108,0.0566
+Netherlands,0.4845,0.2756,0.1575,0.0824,0.4821,0.4861,0.2976,0.1567,0.0780,0.0388
+Norway,0.2496,0.3817,0.2591,0.1096,0.2528,0.4832,0.2708,0.1444,0.0730,0.0330
+Belgium,0.5174,0.2575,0.1504,0.0746,0.5168,0.5412,0.2870,0.1236,0.0550,0.0224
+Colombia,0.2913,0.4008,0.2079,0.1000,0.2897,0.4459,0.2187,0.1096,0.0472,0.0198
+Morocco,0.2860,0.4148,0.2378,0.0614,0.2859,0.4526,0.2294,0.1029,0.0433,0.0187
+Uruguay,0.1898,0.5002,0.2197,0.0903,0.1890,0.3910,0.2079,0.1033,0.0433,0.0172
+Mexico,0.4768,0.2705,0.1601,0.0926,0.4832,0.5188,0.2352,0.0975,0.0419,0.0160
+Switzerland,0.4244,0.2838,0.1853,0.1065,0.4214,0.5002,0.2384,0.0957,0.0390,0.0155
+Croatia,0.1975,0.3941,0.2613,0.1471,0.1965,0.3939,0.1844,0.0896,0.0363,0.0141
+Ecuador,0.2796,0.4153,0.2369,0.0679,0.2826,0.4322,0.1896,0.0854,0.0357,0.0138
+Japan,0.2645,0.3066,0.2572,0.1718,0.2672,0.3380,0.1686,0.0749,0.0327,0.0130
+United States,0.3273,0.2709,0.2220,0.1798,0.3263,0.4221,0.2025,0.0857,0.0362,0.0127
+Türkiye,0.2897,0.2664,0.2403,0.2036,0.2891,0.3839,0.1702,0.0684,0.0275,0.0091
+Senegal,0.1118,0.2597,0.3807,0.2478,0.1100,0.2942,0.1341,0.0534,0.0212,0.0081
+Canada,0.3154,0.3072,0.2338,0.1435,0.3141,0.4293,0.1855,0.0677,0.0241,0.0076
+Austria,0.1338,0.3504,0.2985,0.2174,0.1350,0.2475,0.1066,0.0425,0.0160,0.0053
+Korea Rep,0.2252,0.2812,0.2687,0.2249,0.2254,0.3297,0.1227,0.0393,0.0132,0.0045
+Australia,0.1739,0.2237,0.2742,0.3282,0.1822,0.2631,0.1002,0.0355,0.0117,0.0045
+Paraguay,0.2091,0.2390,0.2635,0.2884,0.2024,0.2978,0.1181,0.0444,0.0148,0.0042
+Sweden,0.1666,0.2527,0.3059,0.2748,0.1663,0.2332,0.0990,0.0378,0.0136,0.0040
+Egypt,0.2027,0.2852,0.2810,0.2302,0.2006,0.3069,0.1114,0.0380,0.0114,0.0033
+Bosnia,0.1737,0.2428,0.3077,0.2758,0.1773,0.2866,0.1068,0.0309,0.0089,0.0028
+Scotland,0.1028,0.2524,0.4642,0.1806,0.0991,0.2444,0.0880,0.0277,0.0090,0.0026
+Algeria,0.0900,0.2745,0.3335,0.3021,0.0936,0.1858,0.0712,0.0252,0.0082,0.0025
+Czechia,0.1838,0.2587,0.2884,0.2691,0.1815,0.2824,0.1002,0.0300,0.0089,0.0022
+Iran,0.1777,0.2636,0.2905,0.2682,0.1792,0.2754,0.0954,0.0296,0.0085,0.0020
+Ghana,0.0726,0.2189,0.3483,0.3602,0.0726,0.1770,0.0624,0.0226,0.0066,0.0020
+Côte d'Ivoire,0.1027,0.2478,0.4398,0.2098,0.0982,0.2413,0.0823,0.0251,0.0070,0.0018
+Tunisia,0.0844,0.1651,0.2794,0.4710,0.0844,0.1253,0.0458,0.0143,0.0042,0.0010
+Congo DR,0.0596,0.1665,0.3477,0.4262,0.0620,0.1296,0.0414,0.0119,0.0036,0.0010
+Panama,0.0522,0.1730,0.3100,0.4648,0.0474,0.1303,0.0423,0.0147,0.0040,0.0010
+Jordan,0.0498,0.1896,0.3012,0.4594,0.0508,0.1090,0.0358,0.0108,0.0028,0.0009
+New Zealand,0.1022,0.1937,0.2781,0.4270,0.1033,0.1718,0.0472,0.0122,0.0029,0.0008
+Iraq,0.0310,0.1048,0.2536,0.6106,0.0315,0.0923,0.0312,0.0094,0.0032,0.0008
+South Africa,0.1142,0.1896,0.2828,0.4134,0.1099,0.1874,0.0574,0.0140,0.0038,0.0007
+Qatar,0.0864,0.1662,0.2732,0.4742,0.0871,0.1580,0.0469,0.0111,0.0026,0.0007
+Uzbekistan,0.0566,0.1583,0.3468,0.4383,0.0535,0.1193,0.0374,0.0116,0.0028,0.0006
+Saudi Arabia,0.0324,0.1663,0.3874,0.4140,0.0330,0.1175,0.0361,0.0106,0.0023,0.0005
+Cabo Verde,0.0254,0.1393,0.3487,0.4866,0.0237,0.0957,0.0270,0.0062,0.0011,0.0002
+Curaçao,0.0167,0.0644,0.2198,0.6992,0.0157,0.0389,0.0064,0.0009,0.0002,0.0001
+Haiti,0.0106,0.0538,0.1968,0.7387,0.0106,0.0298,0.0054,0.0010,0.0002,0.0000`;
+
+        // Official World Cup 2026 Groups Map
+        const WORLD_CUP_GROUPS = {
+            "Group A": ["Mexico", "South Africa", "Korea Rep", "Czechia"],
+            "Group B": ["Canada", "Switzerland", "Qatar", "Bosnia"],
+            "Group C": ["Brazil", "Morocco", "Haiti", "Scotland"],
+            "Group D": ["United States", "Paraguay", "Australia", "Türkiye"],
+            "Group E": ["Germany", "Curaçao", "Côte d'Ivoire", "Ecuador"],
+            "Group F": ["Netherlands", "Japan", "Tunisia", "Sweden"],
+            "Group G": ["Belgium", "Egypt", "Iran", "New Zealand"],
+            "Group H": ["Spain", "Cabo Verde", "Saudi Arabia", "Uruguay"],
+            "Group I": ["France", "Senegal", "Norway", "Iraq"],
+            "Group J": ["Argentina", "Algeria", "Austria", "Jordan"],
+            "Group K": ["Portugal", "Uzbekistan", "Colombia", "Congo DR"],
+            "Group L": ["England", "Croatia", "Ghana", "Panama"]
+        };
+
+        function App() {
+            // Simplified point Matrix configuration state
+            const [payouts, setPayouts] = useState({
+                // Group Stage Points
+                G1: 10,
+                G2: 7,
+                G3: 4,
+                G4: 0,
+                // Knockout Stage Points
+                L32: 15,
+                L16: 25,
+                QF: 40,
+                SF: 70, 
+                FINAL: 110, 
+                CHAMP: 175, 
+            });
+
+            // CSV input and feedback states
+            const [rawCsvText, setRawCsvText] = useState(DEFAULT_CSV_DATA);
+            const [parsedTeams, setParsedTeams] = useState([]);
+            const [errors, setErrors] = useState([]);
+            const [warnings, setWarnings] = useState([]);
+            const [dragActive, setDragActive] = useState(false);
+            const [isExporting, setIsExporting] = useState(false);
+
+            // Filtering & sorting states
+            const [searchTerm, setSearchTerm] = useState("");
+            const [sortBy, setSortBy] = useState("fairPrice"); // 'fairPrice', 'team', 'advProb'
+            const [sortDir, setSortDir] = useState("desc");    // 'asc', 'desc'
+            const [expandedTeam, setExpandedTeam] = useState(null); // name of clicked team
+            
+            // View Mode State: 'leaderboard' or 'groups'
+            const [viewMode, setViewMode] = useState("leaderboard"); 
+
+            // Ref for file input
+            const fileInputRef = useRef(null);
+
+            // Effect to parse the CSV whenever text updates
+            useEffect(() => {
+                parseCSV(rawCsvText);
+            }, [rawCsvText]);
+
+            const parseCSV = (csvText) => {
+                if (!csvText || csvText.trim() === "") {
+                    setErrors(["CSV input is empty."]);
+                    setParsedTeams([]);
+                    return;
+                }
+
+                const lines = csvText.split(/\r?\n/);
+                const parsed = [];
+                const parseErrors = [];
+                const parseWarnings = [];
+
+                if (lines.length < 2) {
+                    setErrors(["CSV must contain at least a header row and one team data row."]);
+                    setParsedTeams([]);
+                    return;
+                }
+
+                // Parse header row
+                const headers = lines[0].split(',').map(h => h.trim());
+                const expectedHeaders = [
+                    "Team", "G1", "G2", "G3", "G4", 
+                    "L32", "L16", "QF", "SF", "FINAL", "CHAMP"
+                ];
+
+                // Verify exact header presence (case-insensitive for convenience but strict mapping)
+                const headerMap = {};
+                expectedHeaders.forEach(expected => {
+                    const idx = headers.findIndex(h => h.toLowerCase() === expected.toLowerCase());
+                    if (idx === -1) {
+                        parseErrors.push(`Missing required column header: "${expected}"`);
+                    } else {
+                        headerMap[expected] = idx;
+                    }
+                });
+
+                if (parseErrors.length > 0) {
+                    setErrors(parseErrors);
+                    setParsedTeams([]);
+                    return;
+                }
+
+                // Parse team rows
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line === "") continue; // skip empty rows
+
+                    const columns = line.split(',').map(c => c.trim());
+
+                    if (columns.length < expectedHeaders.length) {
+                        parseWarnings.push(`Line ${i + 1}: Row has fewer fields than expected. Skipping.`);
+                        continue;
+                    }
+
+                    const team = columns[headerMap["Team"]];
+                    if (!team) {
+                        parseWarnings.push(`Line ${i + 1}: Missing Team Name. Skipping.`);
+                        continue;
+                    }
+
+                    // Parse probabilities
+                    const extractVal = (key) => {
+                        const val = parseFloat(columns[headerMap[key]]);
+                        return isNaN(val) ? 0 : val;
+                    };
+
+                    const teamObj = {
+                        team,
+                        G1: extractVal("G1"),
+                        G2: extractVal("G2"),
+                        G3: extractVal("G3"),
+                        G4: extractVal("G4"),
+                        L32: extractVal("L32"),
+                        L16: extractVal("L16"),
+                        QF: extractVal("QF"),
+                        SF: extractVal("SF"),
+                        FINAL: extractVal("FINAL"),
+                        CHAMP: extractVal("CHAMP"),
+                    };
+
+                    // Mathematical validation
+                    const groupSum = teamObj.G1 + teamObj.G2 + teamObj.G3 + teamObj.G4;
+                    
+                    if (Math.abs(groupSum - 1.00) > 0.01) {
+                        parseWarnings.push(`[${team}] Group stage probabilities sum to ${(groupSum).toFixed(3)} instead of 1.000.`);
+                    }
+
+                    teamObj.advProb = teamObj.L32;
+                    parsed.push(teamObj);
+                }
+
+                setParsedTeams(parsed);
+                setErrors([]);
+                setWarnings(parseWarnings);
+            };
+
+            // Drag and drop event handlers
+            const handleDrag = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.type === "dragenter" || e.type === "dragover") {
+                    setDragActive(true);
+                } else if (e.type === "dragleave") {
+                    setDragActive(false);
+                }
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setDragActive(false);
+
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    const file = e.dataTransfer.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        setRawCsvText(event.target.result);
+                    };
+                    reader.readAsText(file);
+                }
+            };
+
+            const handleFileChange = (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        setRawCsvText(event.target.result);
+                    };
+                    reader.readAsText(file);
+                }
+            };
+
+            // Dynamic EV Calculations
+            const calculatedLeaderboard = useMemo(() => {
+                return parsedTeams.map(teamItem => {
+                    // Group Stage EV
+                    const groupEV = (teamItem.G1 * payouts.G1) +
+                                    (teamItem.G2 * payouts.G2) +
+                                    (teamItem.G3 * payouts.G3) +
+                                    (teamItem.G4 * payouts.G4);
+
+                    // Knockout Stage EV
+                    const koEV = (teamItem.L32 * payouts.L32) +
+                                 (teamItem.L16 * payouts.L16) +
+                                 (teamItem.QF * payouts.QF) +
+                                 (teamItem.SF * payouts.SF) +
+                                 (teamItem.FINAL * payouts.FINAL) +
+                                 (teamItem.CHAMP * payouts.CHAMP);
+
+                    const fairPrice = groupEV + koEV;
+
+                    return {
+                        ...teamItem,
+                        groupEV,
+                        koEV,
+                        fairPrice
+                    };
+                });
+            }, [parsedTeams, payouts]);
+
+            // Analytics Summaries
+            const stats = useMemo(() => {
+                if (calculatedLeaderboard.length === 0) {
+                    return { count: 0, totalPool: 0, highest: null, lowest: null };
+                }
+
+                let total = 0;
+                let highest = calculatedLeaderboard[0];
+                let lowest = calculatedLeaderboard[0];
+
+                calculatedLeaderboard.forEach(t => {
+                    total += t.fairPrice;
+                    if (t.fairPrice > highest.fairPrice) highest = t;
+                    if (t.fairPrice < lowest.fairPrice) lowest = t;
+                });
+
+                return {
+                    count: calculatedLeaderboard.length,
+                    totalPool: total,
+                    highest,
+                    lowest,
+                    average: total / calculatedLeaderboard.length
+                };
+            }, [calculatedLeaderboard]);
+
+            // Filters
+            const filteredAndSorted = useMemo(() => {
+                let list = [...calculatedLeaderboard];
+
+                if (searchTerm.trim() !== "") {
+                    const query = searchTerm.toLowerCase();
+                    list = list.filter(t => t.team.toLowerCase().includes(query));
+                }
+
+                list.sort((a, b) => {
+                    let fieldA, fieldB;
+                    if (sortBy === "fairPrice") {
+                        fieldA = a.fairPrice;
+                        fieldB = b.fairPrice;
+                    } else if (sortBy === "advProb") {
+                        fieldA = a.advProb;
+                        fieldB = b.advProb;
+                    } else { // Team name
+                        fieldA = a.team.toLowerCase();
+                        fieldB = b.team.toLowerCase();
+                    }
+
+                    if (fieldA < fieldB) return sortDir === "asc" ? -1 : 1;
+                    if (fieldA > fieldB) return sortDir === "asc" ? 1 : -1;
+                    return 0;
+                });
+
+                return list;
+            }, [calculatedLeaderboard, searchTerm, sortBy, sortDir]);
+
+            // Grouping Teams by Group A - Group L with intelligent alias-matching
+            const groupedStandings = useMemo(() => {
+                const groups = {};
+                
+                // Helper to match team names case-insensitively and handle aliases
+                const getTeamByAlias = (name, list) => {
+                    const normalizedName = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+                    return list.find(t => {
+                        const normTeam = t.team.toLowerCase().replace(/[^a-z0-9]/g, "");
+                        if (normTeam === normalizedName) return true;
+                        if (normalizedName === "southkorea" && normTeam === "korearep") return true;
+                        if (normalizedName === "korearep" && normTeam === "southkorea") return true;
+                        if (normalizedName === "bosniaandherzegovina" && normTeam === "bosnia") return true;
+                        if (normalizedName === "bosnia" && normTeam === "bosniaandherzegovina") return true;
+                        return false;
+                    });
+                };
+
+                Object.keys(WORLD_CUP_GROUPS).forEach(groupName => {
+                    const teamNames = WORLD_CUP_GROUPS[groupName];
+                    const teamsInGroup = teamNames.map(name => {
+                        const matchedTeamObj = getTeamByAlias(name, calculatedLeaderboard);
+                        if (matchedTeamObj) {
+                            return matchedTeamObj;
+                        }
+                        // Fallback stub if not found in CSV
+                        return {
+                            team: name,
+                            G1: 0, G2: 0, G3: 0, G4: 0,
+                            L32: 0, L16: 0, QF: 0, SF: 0, FINAL: 0, CHAMP: 0,
+                            groupEV: 0, koEV: 0, fairPrice: 0, advProb: 0,
+                            isStub: true
+                        };
+                    });
+
+                    // Sort teams inside the group by price descending
+                    teamsInGroup.sort((a, b) => b.fairPrice - a.fairPrice);
+
+                    // Compute dynamic total expected price for this group
+                    const groupTotalPrice = teamsInGroup.reduce((sum, t) => sum + t.fairPrice, 0);
+
+                    groups[groupName] = {
+                        teams: teamsInGroup,
+                        totalPrice: groupTotalPrice
+                    };
+                });
+
+                return groups;
+            }, [calculatedLeaderboard]);
+
+            const handlePayoutChange = (key, value) => {
+                const num = parseFloat(value);
+                setPayouts(prev => ({
+                    ...prev,
+                    [key]: isNaN(num) ? 0 : num
+                }));
+            };
+
+            const handleCsvExport = () => {
+                setIsExporting(true);
+                try {
+                    let csv = "Rank,Team,Advancement Probability,Group Stage EV,Knockout EV,Calculated Fair Price\n";
+                    const exportList = [...calculatedLeaderboard].sort((a, b) => b.fairPrice - a.fairPrice);
+                    
+                    exportList.forEach((teamItem, idx) => {
+                        csv += `${idx + 1},"${teamItem.team.replace(/"/g, '""')}",${(teamItem.advProb * 100).toFixed(1)}%,${teamItem.groupEV.toFixed(2)},${teamItem.koEV.toFixed(2)},${teamItem.fairPrice.toFixed(2)}\n`;
+                    });
+
+                    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `world_cup_2026_fair_prices.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (e) {
+                    console.error("Export failed", e);
+                } finally {
+                    setIsExporting(false);
+                }
+            };
+
+            const copyToClipboard = () => {
+                let tableText = `FIFA World Cup 2026 Fair Value Leaderboard\n`;
+                tableText += `Payoffs: Group G1: ${payouts.G1}pts | G2: ${payouts.G2}pts | G3: ${payouts.G3}pts | G4: ${payouts.G4}pts\n`;
+                tableText += `Knockout: L32: ${payouts.L32}pts | L16: ${payouts.L16}pts | QF: ${payouts.QF}pts | SF: ${payouts.SF}pts | FINAL: ${payouts.FINAL}pts | CHAMP: ${payouts.CHAMP}pts\n\n`;
+                tableText += `Rank | Team    | Adv. % | Group EV | KO EV | Fair Price\n`;
+                tableText += `-----|---------|--------|----------|-------|-----------\n`;
+
+                const sortedList = [...calculatedLeaderboard].sort((a, b) => b.fairPrice - a.fairPrice);
+                sortedList.forEach((t, i) => {
+                    tableText += `${String(i + 1).padEnd(4)} | ${t.team.padEnd(7)} | ${(t.advProb * 100).toFixed(0).padStart(3)}% | ${t.groupEV.toFixed(1).padStart(8)} | ${t.koEV.toFixed(1).padStart(5)} | ${t.fairPrice.toFixed(2).padStart(9)}\n`;
+                });
+
+                navigator.clipboard.writeText(tableText).then(() => {
+                    alert("Leaderboard copied to clipboard successfully!");
+                }).catch(err => {
+                    console.error('Could not copy text: ', err);
+                });
+            };
+
+            return (
+                <div class="min-h-screen flex flex-col justify-between">
+                    {/* Header bar */}
+                    <header class="w-full py-6 px-8 border-b border-slate-800 glass-panel sticky top-0 z-30">
+                        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-purple to-brand-sapphire flex items-center justify-center shadow-lg shadow-brand-purpleGlow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h1 class="text-2xl font-extrabold font-outfit tracking-tight flex items-center gap-2">
+                                        <span>FIFA World Cup 2026</span>
+                                        <span class="text-xs bg-slate-800 text-brand-purple border border-slate-700 px-2 py-0.5 rounded-full font-sans font-medium uppercase">Fair Value Engine</span>
+                                    </h1>
+                                    <p class="text-xs text-slate-400 mt-0.5">48 Teams | 12 Groups | Clean 11-Header Layout | Additive Expected Points Model</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button 
+                                    onClick={copyToClipboard}
+                                    class="px-4 py-2 text-xs font-semibold rounded-lg glass-input hover:bg-slate-700 transition flex items-center gap-1.5"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                    </svg>
+                                    Copy Board
+                                </button>
+                                <button 
+                                    onClick={handleCsvExport}
+                                    disabled={isExporting || calculatedLeaderboard.length === 0}
+                                    class="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-brand-emerald to-emerald-600 text-white hover:from-brand-emerald hover:to-emerald-500 shadow-md shadow-brand-emeraldGlow transition flex items-center gap-1.5 disabled:opacity-50"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    Export CSV
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Layout Area */}
+                    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        
+                        {/* LEFT SIDEBAR: CSV import and Configuration Panel */}
+                        <section class="lg:col-span-4 flex flex-col gap-6">
+                            
+                            {/* Panel 1: CSV Paste & Import */}
+                            <div class="glass-panel rounded-2xl p-5 relative overflow-hidden">
+                                <div class="shimmer absolute inset-0 pointer-events-none opacity-20"></div>
+                                <h3 class="text-sm font-bold font-outfit uppercase tracking-wider text-slate-300 mb-4 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    1. Probability Data Input (CSV)
+                                </h3>
+
+                                {/* Drag and drop upload zone */}
+                                <div 
+                                    onDragEnter={handleDrag}
+                                    onDragOver={handleDrag}
+                                    onDragLeave={handleDrag}
+                                    onDrop={handleDrop}
+                                    class={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition ${dragActive ? 'border-brand-purple bg-brand-purpleGlow' : 'border-slate-800 hover:border-slate-700 bg-slate-900/40'}`}
+                                    onClick={() => fileInputRef.current.click()}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto text-slate-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <span class="text-xs font-semibold block text-slate-300">Drag & Drop CSV file here</span>
+                                    <span class="text-[10px] text-slate-500 mt-1 block">or click to browse filesystem</span>
+                                    <input 
+                                        type="file" 
+                                        ref={fileInputRef} 
+                                        onChange={handleFileChange} 
+                                        accept=".csv,.txt" 
+                                        class="hidden" 
+                                    />
+                                </div>
+
+                                <div class="mt-4">
+                                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Paste Raw CSV String Below</label>
+                                    <textarea
+                                        value={rawCsvText}
+                                        onChange={(e) => setRawCsvText(e.target.value)}
+                                        rows="6"
+                                        class="w-full font-mono text-xs p-3 glass-input rounded-xl focus:ring-1 focus:ring-brand-purple resize-y"
+                                        placeholder="Team,G1,G2,G3,G4,L32,L16,QF,SF,FINAL,CHAMP"
+                                    ></textarea>
+                                </div>
+
+                                {/* Validation Success / Error Messages */}
+                                {errors.length > 0 && (
+                                    <div class="mt-3 bg-brand-rose/10 border border-brand-rose/20 rounded-xl p-3 text-xs text-brand-rose flex items-start gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                        </svg>
+                                        <div>
+                                            <span class="font-bold">Errors found in CSV:</span>
+                                            <ul class="list-disc pl-4 mt-1 space-y-1">
+                                                {errors.slice(0, 3).map((err, i) => <li key={i}>{err}</li>)}
+                                                {errors.length > 3 && <li>...and {errors.length - 3} more</li>}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {errors.length === 0 && parsedTeams.length > 0 && (
+                                    <div class="mt-3 bg-brand-emerald/10 border border-brand-emerald/20 rounded-xl p-2.5 text-xs text-brand-emerald flex items-center justify-between">
+                                        <span class="flex items-center gap-1.5 font-medium">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                            </svg>
+                                            Parsed {parsedTeams.length} Teams
+                                        </span>
+                                        <button 
+                                            onClick={() => setRawCsvText(DEFAULT_CSV_DATA)}
+                                            class="text-[10px] text-slate-400 hover:text-white underline cursor-pointer"
+                                        >
+                                            Reset Original Grid
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Validation Warnings (Floating points, sums != 1.00) */}
+                                {warnings.length > 0 && (
+                                    <div class="mt-3 max-h-32 overflow-y-auto bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-[11px] text-amber-400">
+                                        <span class="font-bold flex items-center gap-1 mb-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                            </svg>
+                                            Distribution Sum Warnings ({warnings.length}):
+                                        </span>
+                                        <ul class="list-disc pl-4 space-y-0.5 text-slate-400">
+                                            {warnings.slice(0, 5).map((warn, i) => <li key={i}>{warn}</li>)}
+                                            {warnings.length > 5 && <li class="text-[10px] italic">...and {warnings.length - 5} more team warnings</li>}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Panel 2: Point Payoff Matrix Configuration */}
+                            <div class="glass-panel rounded-2xl p-5">
+                                <h3 class="text-sm font-bold font-outfit uppercase tracking-wider text-slate-300 mb-5 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                    </svg>
+                                    2. Dual Payoff Matrix Dashboard
+                                </h3>
+
+                                <div class="space-y-6">
+                                    {/* Section A: Group Stage Points */}
+                                    <div class="bg-slate-900/30 border border-slate-800/80 rounded-xl p-4">
+                                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-brand-purple"></span>
+                                            Group Stage Payoffs
+                                        </h4>
+                                        <div class="grid grid-cols-2 gap-3.5">
+                                            <div>
+                                                <label class="text-[10px] text-slate-400 block mb-1">G1 (1st Place)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={payouts.G1}
+                                                    onChange={(e) => handlePayoutChange("G1", e.target.value)}
+                                                    class="w-full text-sm font-bold p-2 glass-input rounded-lg"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="text-[10px] text-slate-400 block mb-1">G2 (2nd Place)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={payouts.G2}
+                                                    onChange={(e) => handlePayoutChange("G2", e.target.value)}
+                                                    class="w-full text-sm font-bold p-2 glass-input rounded-lg"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="text-[10px] text-slate-400 block mb-1">G3 (3rd Place)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={payouts.G3}
+                                                    onChange={(e) => handlePayoutChange("G3", e.target.value)}
+                                                    class="w-full text-sm font-bold p-2 glass-input rounded-lg"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="text-[10px] text-slate-400 block mb-1">G4 (4th Place)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={payouts.G4}
+                                                    onChange={(e) => handlePayoutChange("G4", e.target.value)}
+                                                    class="w-full text-sm font-bold p-2 glass-input rounded-lg"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Section B: Knockout Stage Points */}
+                                    <div class="bg-slate-900/30 border border-slate-800/80 rounded-xl p-4">
+                                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-brand-emerald"></span>
+                                            Knockout Stage Additive Payoffs
+                                        </h4>
+                                        <div class="space-y-3.5">
+                                            <div class="grid grid-cols-2 gap-3.5">
+                                                <div>
+                                                    <label class="text-[10px] text-slate-400 block mb-1">L32 (Reach R32)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={payouts.L32}
+                                                        onChange={(e) => handlePayoutChange("L32", e.target.value)}
+                                                        class="w-full text-sm font-bold p-2 glass-input rounded-lg"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label class="text-[10px] text-slate-400 block mb-1">L16 (Reach R16)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={payouts.L16}
+                                                        onChange={(e) => handlePayoutChange("L16", e.target.value)}
+                                                        class="w-full text-sm font-bold p-2 glass-input rounded-lg"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-3.5">
+                                                <div>
+                                                    <label class="text-[10px] text-slate-400 block mb-1">QF (Reach QF)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={payouts.QF}
+                                                        onChange={(e) => handlePayoutChange("QF", e.target.value)}
+                                                        class="w-full text-sm font-bold p-2 glass-input rounded-lg"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label class="text-[10px] text-slate-400 block mb-1">SF (Reach Semis)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={payouts.SF}
+                                                        onChange={(e) => handlePayoutChange("SF", e.target.value)}
+                                                        class="w-full text-sm font-bold p-2 glass-input rounded-lg"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-3.5">
+                                                <div>
+                                                    <label class="text-[10px] text-slate-400 block mb-1">FINAL (Reach Final)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={payouts.FINAL}
+                                                        onChange={(e) => handlePayoutChange("FINAL", e.target.value)}
+                                                        class="w-full text-sm font-bold p-2 glass-input rounded-lg"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label class="text-[10px] text-slate-400 block mb-1">CHAMP (Champion)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={payouts.CHAMP}
+                                                        onChange={(e) => handlePayoutChange("CHAMP", e.target.value)}
+                                                        class="w-full text-sm font-bold p-2 glass-input rounded-lg text-emerald-400"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* RIGHT MAIN AREA: Dynamic Leaderboard & Core Analytics */}
+                        <section class="lg:col-span-8 flex flex-col gap-6">
+                            
+                            {/* Pro notice block explaining cumulative value expected value */}
+                            <div class="bg-gradient-to-r from-brand-purple/10 to-brand-sapphire/10 border border-brand-purple/20 rounded-2xl p-4 flex gap-3.5 items-start">
+                                <div class="w-8 h-8 rounded-lg bg-brand-purple/20 flex items-center justify-center text-brand-purple shrink-0 mt-0.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div class="text-xs">
+                                    <h4 class="font-bold text-slate-200">Cumulative Advancement Integration</h4>
+                                    <p class="text-slate-400 mt-1 leading-relaxed">
+                                        Your odds represent the **cumulative probability of reaching** each stage. Under an additive payoff scheme, the expected point value is calculated by multiplying these cumulative probabilities by the stage point bumps:
+                                    </p>
+                                    <div class="mt-2 font-mono bg-slate-950/60 p-2 rounded-lg border border-slate-800/60 text-brand-purple text-[10px]">
+                                        Expected EV = G1×G1_pts + G2×G2_pts + ... + L32×L32_pts + L16×L16_pts + ... + CHAMP×CHAMP_pts
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Analytics / Stats Summary Bar */}
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="glass-panel rounded-2xl p-4 relative overflow-hidden flex flex-col justify-between h-24">
+                                    <div class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Total Pool Val</div>
+                                    <div class="text-xl font-extrabold font-outfit text-white mt-1">
+                                        {stats.totalPool.toLocaleString(undefined, {maximumFractionDigits: 1})} <span class="text-xs font-medium text-slate-500">pts</span>
+                                    </div>
+                                    <div class="text-[9px] text-slate-500 mt-1">Sum of expected payouts</div>
+                                </div>
+
+                                <div class="glass-panel rounded-2xl p-4 relative overflow-hidden flex flex-col justify-between h-24 border-l-2 border-l-brand-purple">
+                                    <div class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Highest Fair Price</div>
+                                    <div class="text-xl font-extrabold font-outfit text-brand-purple mt-1 flex items-baseline gap-1">
+                                        {stats.highest ? stats.highest.fairPrice.toFixed(2) : "0.00"}
+                                        <span class="text-[10px] font-medium text-slate-400 truncate max-w-[80px]">
+                                            ({stats.highest ? stats.highest.team : ""})
+                                        </span>
+                                    </div>
+                                    <div class="text-[9px] text-slate-500 mt-1">Market leader position</div>
+                                </div>
+
+                                <div class="glass-panel rounded-2xl p-4 relative overflow-hidden flex flex-col justify-between h-24">
+                                    <div class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Lowest Fair Price</div>
+                                    <div class="text-xl font-extrabold font-outfit text-brand-rose mt-1 flex items-baseline gap-1">
+                                        {stats.lowest ? stats.lowest.fairPrice.toFixed(2) : "0.00"}
+                                        <span class="text-[10px] font-medium text-slate-400 truncate max-w-[80px]">
+                                            ({stats.lowest ? stats.lowest.team : ""})
+                                        </span>
+                                    </div>
+                                    <div class="text-[9px] text-slate-500 mt-1">Underdog/longshot price</div>
+                                </div>
+
+                                <div class="glass-panel rounded-2xl p-4 relative overflow-hidden flex flex-col justify-between h-24">
+                                    <div class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Average Price</div>
+                                    <div class="text-xl font-extrabold font-outfit text-slate-300 mt-1">
+                                        {stats.average ? stats.average.toFixed(2) : "0.00"} <span class="text-xs font-medium text-slate-500">pts</span>
+                                    </div>
+                                    <div class="text-[9px] text-slate-500 mt-1">Across all {stats.count} teams</div>
+                                </div>
+                            </div>
+
+                            {/* View Switcher Tab bar */}
+                            <div class="flex items-center justify-between border border-slate-800 bg-slate-950/40 p-1.5 rounded-xl">
+                                <div class="flex gap-2">
+                                    <button 
+                                        onClick={() => setViewMode("leaderboard")}
+                                        class={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${viewMode === 'leaderboard' ? 'bg-brand-purple text-white shadow-md shadow-brand-purpleGlow' : 'text-slate-400 hover:text-white'}`}
+                                    >
+                                        🏆 Global Leaderboard
+                                    </button>
+                                    <button 
+                                        onClick={() => setViewMode("groups")}
+                                        class={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${viewMode === 'groups' ? 'bg-brand-purple text-white shadow-md shadow-brand-purpleGlow' : 'text-slate-400 hover:text-white'}`}
+                                    >
+                                        ⚽ Group Standings (12 Groups)
+                                    </button>
+                                </div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mr-3 hidden sm:inline">World Cup 2026 Groups</span>
+                            </div>
+
+                            {/* Tab Mode A: Global Leaderboard View */}
+                            {viewMode === "leaderboard" && (
+                                <div class="glass-panel rounded-2xl p-5 flex flex-col flex-grow">
+                                    
+                                    {/* Search and Sort controls */}
+                                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5 pb-5 border-b border-slate-800">
+                                        <h2 class="text-base font-bold font-outfit text-white self-start sm:self-center flex items-center gap-2">
+                                            <span>Calculated Fair Prices</span>
+                                            <span class="text-xs bg-brand-purple/10 text-brand-purple border border-brand-purple/20 px-2 py-0.5 rounded-full font-sans font-medium">
+                                                {filteredAndSorted.length} matches
+                                            </span>
+                                        </h2>
+
+                                        {/* Inputs */}
+                                        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                                            {/* Search Filter */}
+                                            <div class="relative flex-grow sm:w-56">
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Search by team..." 
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                    class="w-full text-xs py-2 pl-8 pr-3 rounded-lg glass-input"
+                                                />
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-500 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                </svg>
+                                                {searchTerm && (
+                                                    <button 
+                                                        onClick={() => setSearchTerm("")}
+                                                        class="absolute right-2.5 top-2 text-slate-500 hover:text-white text-xs"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {/* Sort By Dropdown */}
+                                            <div class="flex items-center gap-1 text-xs">
+                                                <span class="text-slate-400 hidden sm:inline">Sort:</span>
+                                                <select
+                                                    value={sortBy}
+                                                    onChange={(e) => setSortBy(e.target.value)}
+                                                    class="py-2 px-2 rounded-lg glass-input text-xs font-medium bg-slate-900 cursor-pointer"
+                                                >
+                                                    <option value="fairPrice">Fair Price</option>
+                                                    <option value="advProb">Adv. Prob %</option>
+                                                    <option value="team">Team (A-Z)</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Sort Order Toggle */}
+                                            <button
+                                                onClick={() => setSortDir(prev => prev === "desc" ? "asc" : "desc")}
+                                                class="py-2 px-2.5 rounded-lg glass-input text-xs font-bold hover:text-white"
+                                                title="Toggle Direction"
+                                            >
+                                                {sortDir === "desc" ? "↓ DESC" : "↑ ASC"}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Results Table */}
+                                    <div class="overflow-x-auto w-full">
+                                        {filteredAndSorted.length === 0 ? (
+                                            <div class="py-12 text-center text-slate-500 text-sm">
+                                                No teams matching "{searchTerm}" found. Check your search query or CSV file.
+                                            </div>
+                                        ) : (
+                                            <table class="w-full border-collapse text-left">
+                                                <thead>
+                                                    <tr class="border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                                                        <th class="py-3 px-3 w-12 text-center">Rank</th>
+                                                        <th class="py-3 px-3">Team</th>
+                                                        <th class="py-3 px-3 text-right">Group EV</th>
+                                                        <th class="py-3 px-3 text-right">KO EV</th>
+                                                        <th class="py-3 px-3 text-center">Adv. %</th>
+                                                        <th class="py-3 px-3 text-right text-brand-emerald">Fair Price</th>
+                                                        <th class="py-3 px-3 hidden md:table-cell">Stage Probabilities Stack (G1-G4)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {filteredAndSorted.map((teamItem, index) => {
+                                                        const isExpanded = expandedTeam === teamItem.team;
+                                                        
+                                                        return (
+                                                            <React.Fragment key={teamItem.team}>
+                                                                {/* Standard row */}
+                                                                <tr 
+                                                                    onClick={() => setExpandedTeam(isExpanded ? null : teamItem.team)}
+                                                                    class={`border-b border-slate-800/40 hover:bg-slate-800/25 transition cursor-pointer text-xs ${isExpanded ? 'bg-slate-800/20' : ''}`}
+                                                                >
+                                                                    {/* Rank */}
+                                                                    <td class="py-3.5 px-3 text-center font-bold text-slate-500 font-outfit">
+                                                                        {sortDir === "desc" ? index + 1 : filteredAndSorted.length - index}
+                                                                    </td>
+
+                                                                    {/* Team */}
+                                                                    <td class="py-3.5 px-3 font-semibold font-outfit text-white text-sm flex items-center gap-2">
+                                                                        <span class="w-2.5 h-2.5 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-[7px] text-slate-400 font-sans">
+                                                                            {teamItem.team[0]}
+                                                                        </span>
+                                                                        {teamItem.team}
+                                                                        {isExpanded ? (
+                                                                            <span class="text-[9px] text-brand-purple font-sans font-normal ml-1">▲ Hide Details</span>
+                                                                        ) : (
+                                                                            <span class="text-[9px] text-slate-500 font-sans font-normal ml-1 hover:text-slate-300">▼ Show Details</span>
+                                                                        )}
+                                                                    </td>
+
+                                                                    {/* Group Stage Expected Value */}
+                                                                    <td class="py-3.5 px-3 text-right font-mono text-slate-400">
+                                                                        {teamItem.groupEV.toFixed(2)}
+                                                                    </td>
+
+                                                                    {/* Knockout Stage Expected Value */}
+                                                                    <td class="py-3.5 px-3 text-right font-mono text-slate-400">
+                                                                        {teamItem.koEV.toFixed(2)}
+                                                                    </td>
+
+                                                                    {/* Advancement Probability (L32) */}
+                                                                    <td class="py-3.5 px-3 text-center font-semibold text-brand-sapphire font-mono">
+                                                                        {(teamItem.advProb * 100).toFixed(1)}%
+                                                                    </td>
+
+                                                                    {/* Calculated Fair Price */}
+                                                                    <td class="py-3.5 px-3 text-right text-base font-extrabold font-outfit text-brand-emerald">
+                                                                        {teamItem.fairPrice.toFixed(2)}
+                                                                    </td>
+
+                                                                    {/* Visual probability stack bar chart */}
+                                                                    <td class="py-3.5 px-3 hidden md:table-cell">
+                                                                        <div class="flex items-center gap-1.5 w-full">
+                                                                            <div class="h-2 rounded-full flex-grow overflow-hidden flex bg-slate-800 max-w-[160px]">
+                                                                                <div class="bg-brand-purple h-full" style={{ width: `${teamItem.G1 * 100}%` }} title={`G1: ${(teamItem.G1*100).toFixed(0)}%`}></div>
+                                                                                <div class="bg-brand-sapphire h-full" style={{ width: `${teamItem.G2 * 100}%` }} title={`G2: ${(teamItem.G2*100).toFixed(0)}%`}></div>
+                                                                                <div class="bg-brand-amber h-full" style={{ width: `${teamItem.G3 * 100}%` }} title={`G3: ${(teamItem.G3*100).toFixed(0)}%`}></div>
+                                                                                <div class="bg-brand-rose h-full" style={{ width: `${teamItem.G4 * 100}%` }} title={`G4: ${(teamItem.G4*100).toFixed(0)}%`}></div>
+                                                                            </div>
+                                                                            <span class="text-[9px] text-slate-500 font-mono">G1:{(teamItem.G1*100).toFixed(0)}%</span>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+
+                                                                {/* Expandable Breakdown Drawer Row */}
+                                                                {isExpanded && (
+                                                                    <tr>
+                                                                        <td colSpan="7" class="bg-slate-900/60 p-4 border-b border-slate-800/40">
+                                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                                
+                                                                                {/* Column 1: Group stage breakdown */}
+                                                                                <div class="bg-slate-950/40 rounded-xl p-3 border border-slate-800/60">
+                                                                                    <div class="text-[10px] font-bold text-brand-purple uppercase tracking-wider mb-2">Group Stage breakdown (G1 - G4)</div>
+                                                                                    <div class="space-y-2 text-xs">
+                                                                                        <div class="flex justify-between items-center">
+                                                                                            <span class="text-slate-400">G1 (1st):</span>
+                                                                                            <span class="font-mono font-semibold">{(teamItem.G1 * 100).toFixed(2)}% <span class="text-[10px] text-slate-500">({(teamItem.G1 * payouts.G1).toFixed(2)} pts)</span></span>
+                                                                                        </div>
+                                                                                        <div class="flex justify-between items-center">
+                                                                                            <span class="text-slate-400">G2 (2nd):</span>
+                                                                                            <span class="font-mono font-semibold">{(teamItem.G2 * 100).toFixed(2)}% <span class="text-[10px] text-slate-500">({(teamItem.G2 * payouts.G2).toFixed(2)} pts)</span></span>
+                                                                                        </div>
+                                                                                        <div class="flex justify-between items-center">
+                                                                                            <span class="text-slate-400">G3 (3rd):</span>
+                                                                                            <span class="font-mono font-semibold">{(teamItem.G3 * 100).toFixed(2)}% <span class="text-[10px] text-slate-500">({(teamItem.G3 * payouts.G3).toFixed(2)} pts)</span></span>
+                                                                                        </div>
+                                                                                        <div class="flex justify-between items-center">
+                                                                                            <span class="text-slate-400">G4 (4th):</span>
+                                                                                            <span class="font-mono font-semibold">{(teamItem.G4 * 100).toFixed(2)}% <span class="text-[10px] text-slate-500">({(teamItem.G4 * payouts.G4).toFixed(2)} pts)</span></span>
+                                                                                        </div>
+                                                                                        <div class="border-t border-slate-800/80 pt-1.5 flex justify-between items-center font-semibold text-white">
+                                                                                            <span>Expected Group EV:</span>
+                                                                                            <span class="font-mono text-brand-purple">{teamItem.groupEV.toFixed(2)} pts</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {/* Column 2: Knockout stage breakdown */}
+                                                                                <div class="bg-slate-950/40 rounded-xl p-3 border border-slate-800/60">
+                                                                                    <div class="text-[10px] font-bold text-brand-emerald uppercase tracking-wider mb-2">Knockout Stage Cumulative Probabilities</div>
+                                                                                    <div class="space-y-1.5 text-xs max-h-48 overflow-y-auto pr-1">
+                                                                                        <div class="flex justify-between items-center">
+                                                                                            <span class="text-slate-400">L32 (Reach R32):</span>
+                                                                                            <span class="font-mono">{(teamItem.L32 * 100).toFixed(2)}% <span class="text-[10px] text-slate-500">({(teamItem.L32 * payouts.L32).toFixed(2)} pts)</span></span>
+                                                                                        </div>
+                                                                                        <div class="flex justify-between items-center">
+                                                                                            <span class="text-slate-400">L16 (Reach R16):</span>
+                                                                                            <span class="font-mono">{(teamItem.L16 * 100).toFixed(2)}% <span class="text-[10px] text-slate-500">({(teamItem.L16 * payouts.L16).toFixed(2)} pts)</span></span>
+                                                                                        </div>
+                                                                                        <div class="flex justify-between items-center">
+                                                                                            <span class="text-slate-400">QF (Reach QF):</span>
+                                                                                            <span class="font-mono">{(teamItem.QF * 100).toFixed(2)}% <span class="text-[10px] text-slate-500">({(teamItem.QF * payouts.QF).toFixed(2)} pts)</span></span>
+                                                                                        </div>
+                                                                                        <div class="flex justify-between items-center">
+                                                                                            <span class="text-slate-400">SF (Reach Semis):</span>
+                                                                                            <span class="font-mono">{(teamItem.SF * 100).toFixed(2)}% <span class="text-[10px] text-slate-500">({(teamItem.SF * payouts.SF).toFixed(2)} pts)</span></span>
+                                                                                        </div>
+                                                                                        <div class="flex justify-between items-center">
+                                                                                            <span class="text-slate-400">FINAL (Reach Final):</span>
+                                                                                            <span class="font-mono">{(teamItem.FINAL * 100).toFixed(2)}% <span class="text-[10px] text-slate-500">({(teamItem.FINAL * payouts.FINAL).toFixed(2)} pts)</span></span>
+                                                                                        </div>
+                                                                                        <div class="flex justify-between items-center">
+                                                                                            <span class="text-slate-300 font-medium">CHAMP (Champion):</span>
+                                                                                            <span class="font-mono font-bold text-emerald-400">{(teamItem.CHAMP * 100).toFixed(2)}% <span class="text-[10px] text-slate-400">({(teamItem.CHAMP * payouts.CHAMP).toFixed(2)} pts)</span></span>
+                                                                                        </div>
+                                                                                        <div class="border-t border-slate-800/80 pt-1.5 flex justify-between items-center font-semibold text-white">
+                                                                                            <span>Expected Knockout EV:</span>
+                                                                                            <span class="font-mono text-brand-emerald">{teamItem.koEV.toFixed(2)} pts</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                )}
+                                                            </React.Fragment>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tab Mode B: Group-by-Group Standing View */}
+                            {viewMode === "groups" && (
+                                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                    {Object.keys(groupedStandings).map(groupName => {
+                                        const groupData = groupedStandings[groupName];
+                                        return (
+                                            <div key={groupName} class="glass-panel rounded-2xl overflow-hidden flex flex-col justify-between border-t-2 border-t-brand-purple glow-hover">
+                                                {/* Group Header */}
+                                                <div class="bg-slate-900/60 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                                                    <span class="font-bold text-sm text-white tracking-wide font-outfit uppercase">{groupName}</span>
+                                                    <span class="text-[10px] font-mono bg-slate-800 border border-slate-700 text-slate-300 py-0.5 px-2 rounded-full font-bold">
+                                                        Total EV: {groupData.totalPrice.toFixed(1)} pts
+                                                    </span>
+                                                </div>
+
+                                                {/* Teams list ordered by price */}
+                                                <div class="p-4 divide-y divide-slate-800/40 flex-grow">
+                                                    {groupData.teams.map((teamItem, idx) => {
+                                                        const isExpanded = expandedTeam === teamItem.team;
+                                                        
+                                                        return (
+                                                            <div key={teamItem.team} class="py-2.5 first:pt-0 last:pb-0">
+                                                                <div 
+                                                                    onClick={() => setExpandedTeam(isExpanded ? null : teamItem.team)}
+                                                                    class="flex items-center justify-between cursor-pointer group/item"
+                                                                >
+                                                                    <div class="flex items-center gap-2 overflow-hidden">
+                                                                        <span class="text-[10px] text-slate-500 font-bold font-mono">#{idx+1}</span>
+                                                                        <span class="font-semibold text-xs text-slate-200 group-hover/item:text-white truncate">
+                                                                            {teamItem.team}
+                                                                        </span>
+                                                                        {teamItem.isStub && (
+                                                                            <span class="text-[8px] bg-brand-rose/25 text-brand-rose px-1 rounded-sm">Missing</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div class="flex items-center gap-2 shrink-0">
+                                                                        <span class="text-[10px] font-mono text-slate-500">{(teamItem.advProb * 100).toFixed(0)}% adv</span>
+                                                                        <span class="font-extrabold text-sm text-brand-emerald font-outfit">
+                                                                            {teamItem.fairPrice.toFixed(1)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Expansion details Inside Group Standing Card */}
+                                                                {isExpanded && !teamItem.isStub && (
+                                                                    <div class="mt-2.5 bg-slate-950/60 p-3 rounded-lg border border-slate-800/40 text-[10px] space-y-2">
+                                                                        <div class="grid grid-cols-2 gap-2 text-slate-400 font-mono">
+                                                                            <div>G1 (1st): <span class="text-white font-bold">{(teamItem.G1*100).toFixed(0)}%</span></div>
+                                                                            <div>L32 (R32): <span class="text-white font-bold">{(teamItem.L32*100).toFixed(0)}%</span></div>
+                                                                            <div>G2 (2nd): <span class="text-white font-bold">{(teamItem.G2*100).toFixed(0)}%</span></div>
+                                                                            <div>L16 (R16): <span class="text-white font-bold">{(teamItem.L16*100).toFixed(0)}%</span></div>
+                                                                            <div>G3 (3rd): <span class="text-white font-bold">{(teamItem.G3*100).toFixed(0)}%</span></div>
+                                                                            <div>QF (QF): <span class="text-white font-bold">{(teamItem.QF*100).toFixed(0)}%</span></div>
+                                                                            <div>G4 (4th): <span class="text-white font-bold">{(teamItem.G4*100).toFixed(0)}%</span></div>
+                                                                            <div>SF (Semis): <span class="text-white font-bold">{(teamItem.SF*100).toFixed(0)}%</span></div>
+                                                                        </div>
+                                                                        <div class="border-t border-slate-800 pt-1.5 flex justify-between font-bold text-white text-[11px]">
+                                                                            <span>Expected EV:</span>
+                                                                            <span class="text-brand-emerald">{teamItem.fairPrice.toFixed(2)} pts</span>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </section>
+                    </main>
+
+                    {/* App Footer */}
+                    <footer class="w-full border-t border-slate-900 glass-panel py-4 px-8 mt-12 text-center text-xs text-slate-500">
+                        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+                            <span>FIFA World Cup 2026 Fair Value trading algorithm. Designed for high fidelity sports trading pools.</span>
+                            <div class="flex items-center gap-4">
+                                <a href="file:///Users/anirudhgovil/.gemini/antigravity/scratch/fifa-world-cup-trading/README.md" class="hover:text-slate-300 underline">Read Documentation</a>
+                                <span>v1.0.0 (Babel/React Standalone)</span>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        // Render application using ReactDOM 18 createRoot
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
