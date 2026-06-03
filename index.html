@@ -219,6 +219,7 @@ Haiti,0.0106,0.0538,0.1968,0.7387,0.0106,0.0298,0.0054,0.0010,0.0002,0.0000`;
                 G2: 7,
                 G3: 4,
                 G4: 0,
+                G3_ADV: 0, // Extra bonus for team finishing 3rd and advancing to R32
                 // Knockout Stage Points
                 L32: 15,
                 L16: 25,
@@ -389,11 +390,17 @@ Haiti,0.0106,0.0538,0.1968,0.7387,0.0106,0.0298,0.0054,0.0010,0.0002,0.0000`;
             // Dynamic EV Calculations
             const calculatedLeaderboard = useMemo(() => {
                 return parsedTeams.map(teamItem => {
+                    // Probability of finishing 3rd AND advancing to R32:
+                    // P(G3 & Adv) = P(Adv to R32) - P(G1) - P(G2)
+                    // Bounded between 0 and G3
+                    const g3AdvProb = Math.max(0, Math.min(teamItem.G3, teamItem.L32 - teamItem.G1 - teamItem.G2));
+
                     // Group Stage EV
                     const groupEV = (teamItem.G1 * payouts.G1) +
                                     (teamItem.G2 * payouts.G2) +
                                     (teamItem.G3 * payouts.G3) +
-                                    (teamItem.G4 * payouts.G4);
+                                    (teamItem.G4 * payouts.G4) +
+                                    (g3AdvProb * payouts.G3_ADV);
 
                     // Knockout Stage EV
                     const koEV = (teamItem.L32 * payouts.L32) +
@@ -407,6 +414,7 @@ Haiti,0.0106,0.0538,0.1968,0.7387,0.0106,0.0298,0.0054,0.0010,0.0002,0.0000`;
 
                     return {
                         ...teamItem,
+                        g3AdvProb,
                         groupEV,
                         koEV,
                         fairPrice
@@ -554,7 +562,7 @@ Haiti,0.0106,0.0538,0.1968,0.7387,0.0106,0.0298,0.0054,0.0010,0.0002,0.0000`;
 
             const copyToClipboard = () => {
                 let tableText = `FIFA World Cup 2026 Fair Value Leaderboard\n`;
-                tableText += `Payoffs: Group G1: ${payouts.G1}pts | G2: ${payouts.G2}pts | G3: ${payouts.G3}pts | G4: ${payouts.G4}pts\n`;
+                tableText += `Payoffs: Group G1: ${payouts.G1}pts | G2: ${payouts.G2}pts | G3: ${payouts.G3}pts | G4: ${payouts.G4}pts | G3_ADV: ${payouts.G3_ADV}pts\n`;
                 tableText += `Knockout: L32: ${payouts.L32}pts | L16: ${payouts.L16}pts | QF: ${payouts.QF}pts | SF: ${payouts.SF}pts | FINAL: ${payouts.FINAL}pts | CHAMP: ${payouts.CHAMP}pts\n\n`;
                 tableText += `Rank | Team    | Adv. % | Group EV | KO EV | Fair Price\n`;
                 tableText += `-----|---------|--------|----------|-------|-----------\n`;
@@ -765,6 +773,15 @@ Haiti,0.0106,0.0538,0.1968,0.7387,0.0106,0.0298,0.0054,0.0010,0.0002,0.0000`;
                                                     value={payouts.G4}
                                                     onChange={(e) => handlePayoutChange("G4", e.target.value)}
                                                     class="w-full text-sm font-bold p-2 glass-input rounded-lg"
+                                                />
+                                            </div>
+                                            <div class="col-span-2 mt-2">
+                                                <label class="text-[10px] text-brand-purple font-semibold block mb-1">G3 & Advances (Bonus)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={payouts.G3_ADV}
+                                                    onChange={(e) => handlePayoutChange("G3_ADV", e.target.value)}
+                                                    class="w-full text-sm font-bold p-2 glass-input rounded-lg border-brand-purple/30 focus:border-brand-purple"
                                                 />
                                             </div>
                                         </div>
@@ -1096,6 +1113,10 @@ Haiti,0.0106,0.0538,0.1968,0.7387,0.0106,0.0298,0.0054,0.0010,0.0002,0.0000`;
                                                                                             <span class="text-slate-400">G4 (4th):</span>
                                                                                             <span class="font-mono font-semibold">{(teamItem.G4 * 100).toFixed(2)}% <span class="text-[10px] text-slate-500">({(teamItem.G4 * payouts.G4).toFixed(2)} pts)</span></span>
                                                                                         </div>
+                                                                                        <div class="flex justify-between items-center text-brand-purple">
+                                                                                            <span class="text-brand-purple font-medium">G3 & Adv (Bonus):</span>
+                                                                                            <span class="font-mono font-semibold">{(teamItem.g3AdvProb * 100).toFixed(2)}% <span class="text-[10px] opacity-75">({(teamItem.g3AdvProb * payouts.G3_ADV).toFixed(2)} pts)</span></span>
+                                                                                        </div>
                                                                                         <div class="border-t border-slate-800/80 pt-1.5 flex justify-between items-center font-semibold text-white">
                                                                                             <span>Expected Group EV:</span>
                                                                                             <span class="font-mono text-brand-purple">{teamItem.groupEV.toFixed(2)} pts</span>
@@ -1207,6 +1228,12 @@ Haiti,0.0106,0.0538,0.1968,0.7387,0.0106,0.0298,0.0054,0.0010,0.0002,0.0000`;
                                                                             <div>G4 (4th): <span class="text-white font-bold">{(teamItem.G4*100).toFixed(0)}%</span></div>
                                                                             <div>SF (Semis): <span class="text-white font-bold">{(teamItem.SF*100).toFixed(0)}%</span></div>
                                                                         </div>
+                                                                        {payouts.G3_ADV > 0 && (
+                                                                            <div class="border-t border-slate-800/40 pt-1 text-[9px] text-brand-purple font-mono flex justify-between">
+                                                                                <span>G3 & Adv Bonus Prob:</span>
+                                                                                <span class="font-bold">{(teamItem.g3AdvProb * 100).toFixed(1)}% ({((teamItem.g3AdvProb) * payouts.G3_ADV).toFixed(1)} pts)</span>
+                                                                            </div>
+                                                                        )}
                                                                         <div class="border-t border-slate-800 pt-1.5 flex justify-between font-bold text-white text-[11px]">
                                                                             <span>Expected EV:</span>
                                                                             <span class="text-brand-emerald">{teamItem.fairPrice.toFixed(2)} pts</span>
